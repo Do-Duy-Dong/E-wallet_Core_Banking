@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: banking-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/banking-db
+    username: postgres
+    password: 123456
+  jpa:
+    hibernate:
+      ddl-auto: update
+jwt:
+  accessSecret: 5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437
+  refreshSecret: 773367639792F423F4528482B4D6251655468576D5A713474375367566B59703
+  accessExpirationMs: 900000
+  refreshExpirationMs: 604800000
+server:
+  port: 8081
