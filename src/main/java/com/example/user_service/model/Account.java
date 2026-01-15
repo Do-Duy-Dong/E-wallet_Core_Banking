@@ -1,6 +1,8 @@
 package com.example.user_service.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -24,6 +26,8 @@ import java.util.UUID;
         private String fullName;
         private String email;
         private String address;
+//        min value >0
+        @Min(0L)
         private long balance;
         private boolean active;
         private String role;
