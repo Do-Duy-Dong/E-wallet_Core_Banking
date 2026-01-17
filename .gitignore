@@ -20,6 +20,10 @@ target/
 *.ipr
 /src/main/resources/application.properties
 /src/main/resources/application-dev.yml
+docker-compose.yml
+Dockerfile
+postgres_data/
+redis_data/
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/

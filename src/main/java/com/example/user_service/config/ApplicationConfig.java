@@ -7,6 +7,7 @@ import com.example.user_service.service.UserDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -17,6 +18,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
+@EnableAsync
 public class ApplicationConfig {
     private final AccountRepository accountRepository;
 
@@ -35,14 +37,15 @@ public class ApplicationConfig {
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration configuration
-    ){
+    ) throws Exception {
         return configuration.getAuthenticationManager();
     }
     @Bean
     public AuthenticationProvider authenticationProvider(
             UserDetailService userDetailService
     ){
-        DaoAuthenticationProvider provider= new DaoAuthenticationProvider(userDetailService);
+        DaoAuthenticationProvider provider= new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
 

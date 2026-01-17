@@ -28,7 +28,7 @@ import java.util.UUID;
         private String address;
 //        min value >0
         @Min(0L)
-        private long balance;
+        private Long balance;
         private boolean active;
         private String role;
         @Version

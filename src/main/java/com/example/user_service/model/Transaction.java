@@ -13,13 +13,13 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 @Table(name = "transaction")
-public class Transaction {
+public class Transaction extends BaseClass {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     @Column(unique = true, nullable = false)
     private String requestId;
-    private long amount;
+    private Long amount;
     private String message;
     @Enumerated(EnumType.STRING)
     private TypeEnum type;
