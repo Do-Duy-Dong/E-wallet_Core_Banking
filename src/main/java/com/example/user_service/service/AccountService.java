@@ -6,15 +6,11 @@ import com.example.user_service.dto.LoginRequest;
 import com.example.user_service.dto.RegisterRequest;
 import com.example.user_service.model.Account;
 import com.example.user_service.repository.AccountRepository;
-import io.jsonwebtoken.Claims;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -72,4 +68,15 @@ public class AccountService {
     public Account saveAccount(Account account){
         return accountRepository.save(account);
     }
+//    API REFRESH TOKEN [/api/auth/refresh]
+    public Map<String, String> refreshToken(String refreshToken) {
+        String userName = jwtService.extractUsername(refreshToken);
+        Account account = getAccountByUserName(userName);
+        if (jwtService.isTokenValid(refreshToken, account.getUserName())) {
+            String newAccessToken = jwtService.generateAccessToken(account.getUserName());
+            return Map.of("accessToken", newAccessToken);
+        }
+        throw new RuntimeException("Invalid or expired refresh token");
+    }
 }
+

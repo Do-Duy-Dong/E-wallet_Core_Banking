@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -38,5 +37,18 @@ public class UserController {
             ){
         accountService.register(request);
         return ResponseEntity.ok("Register successfully");
+    }
+    @PostMapping("/api/auth/refresh")
+    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            return ResponseEntity.badRequest().body("Refresh token is required");
+        }
+        try {
+            Map<String, String> tokens = accountService.refreshToken(refreshToken);
+            return ResponseEntity.ok(tokens);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Invalid or expired refresh token");
+        }
     }
 }

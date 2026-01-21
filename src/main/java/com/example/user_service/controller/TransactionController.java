@@ -7,6 +7,7 @@ import com.example.user_service.dto.TransactionResponse;
 import com.example.user_service.service.TransactionsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -18,12 +19,15 @@ import java.util.Map;
 @RequestMapping("/api/baking")
 public class TransactionController {
     private final TransactionsService transactionsService;
+
     @PostMapping("/create-transaction")
     public ResponseEntity<?> createTransaction(
             @RequestBody GetOtpRequest request,
-            @AuthenticationPrincipal UserDetails userDetails
+            @AuthenticationPrincipal UserDetails userDetails,
+            Authentication authentication
     ){
         String otpId=transactionsService.initiateTransfer(request, userDetails.getUsername());
+
         return ResponseEntity.ok(Map.of(
                 "otpRequestId", otpId,
                 "message", "OTP sent to your email"

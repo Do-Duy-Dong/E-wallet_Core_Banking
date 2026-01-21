@@ -68,7 +68,7 @@ public class TransactionsService {
                 .otp(otp)
                 .subject("Your OTP Code")
                 .build();
-//        emailService.sendEmail(mailVariable);
+        emailService.sendEmail(mailVariable);
         return request.getRequestId();
     }
 

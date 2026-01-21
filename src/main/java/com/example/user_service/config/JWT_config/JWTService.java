@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
-import java.util.Base64;
 import java.util.Date;
 
 @Service
@@ -53,5 +52,23 @@ public class JWTService {
     }
     public Claims validateRefreshToken(String token) {
         return validateToken(token, refreshKey);
+    }
+
+    public String extractUsername(String token) {
+        try {
+            Claims claims = validateRefreshToken(token);
+            return claims.getSubject();
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid token");
+        }
+    }
+
+    public boolean isTokenValid(String token, String username) {
+        try {
+            Claims claims = validateRefreshToken(token);
+            return claims.getSubject().equals(username) && !claims.getExpiration().before(new Date());
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
