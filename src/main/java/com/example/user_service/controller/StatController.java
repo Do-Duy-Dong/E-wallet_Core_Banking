@@ -1,6 +1,6 @@
 package com.example.user_service.controller;
 
-import com.example.user_service.dto.StatsMonthlyReponse;
+//import com.example.user_service.dto.StatsMonthlyReponse;
 import com.example.user_service.service.StatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +18,11 @@ import java.time.LocalDateTime;
 public class StatController {
     private final StatService statService;
 
-    @GetMapping("/monthly-pay")
-    public ResponseEntity<StatsMonthlyReponse> getMonthlyStats(
-            @AuthenticationPrincipal UserDetails userDetails
-            ){
-        StatsMonthlyReponse reponse = statService.statsMonthlyPayment(userDetails.getUsername(), LocalDateTime.now());
-        return ResponseEntity.ok(reponse);
-    }
+//    @GetMapping("/monthly-pay")
+//    public ResponseEntity<StatsMonthlyReponse> getMonthlyStats(
+//            @AuthenticationPrincipal UserDetails userDetails
+//            ){
+//        StatsMonthlyReponse reponse = statService.statsMonthlyPayment(userDetails.getUsername(), LocalDateTime.now());
+//        return ResponseEntity.ok(reponse);
+//    }
 }

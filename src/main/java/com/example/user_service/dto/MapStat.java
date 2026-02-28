@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-public class StatsMonthlyReponse {
-    private Long totalPay;
-    private Long totalReceive;
+public class MapStat {
+    private int total=0;
+    private Long amount=0L;
 }
