@@ -1,6 +1,6 @@
 package com.example.user_service.controller;
 
-import com.example.user_service.dto.BankingRequest;
+import com.example.user_service.dto.VerifyOtp;
 import com.example.user_service.dto.GetOtpRequest;
 import com.example.user_service.dto.ResponsePageBase;
 import com.example.user_service.dto.TransactionResponse;
@@ -35,7 +35,7 @@ public class TransactionController {
     }
     @PostMapping("/confirm-transaction")
     public ResponseEntity<?> confirmTransaction(
-            @RequestBody BankingRequest request,
+            @RequestBody VerifyOtp request,
             @AuthenticationPrincipal UserDetails userDetails
             ){
         transactionsService.confirmTransaction(request, userDetails.getUsername());
@@ -50,4 +50,5 @@ public class TransactionController {
         ResponsePageBase<TransactionResponse> res = transactionsService.getTransactions(userDetails.getUsername(), page);
         return ResponseEntity.ok(res);
     }
+
 }

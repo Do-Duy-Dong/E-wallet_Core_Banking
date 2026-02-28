@@ -28,7 +28,9 @@ import java.util.UUID;
         private String address;
 //        min value >0
         @Min(0L)
-        private Long balance;
+        private Long balance=0L;
+
+        private Long held=0L;
         private boolean active;
         private String role;
         private String token;

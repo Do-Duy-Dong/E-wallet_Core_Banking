@@ -11,7 +11,9 @@ import lombok.Setter;
 @NoArgsConstructor
 public class GetOtpRequest {
     private String requestId;
+    private String fromAccount;
     private String toAccount;
     private long amount;
     private String message;
+    private String signature;
 }

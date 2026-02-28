@@ -1,54 +1,6 @@
-version: '3.8'
-
 services:
-  bank-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: bank-app
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/banking-db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=123456
-      - SPRING_DATA_REDIS_HOST=redis
-      - SPRING_DATA_REDIS_PORT=6379
-      - SERVER_PORT=8080
-    depends_on:
-      - redis
-      - postgres
-    networks:
-      - user-net
-
-  postgres:
-    image: postgres:16-alpine
-    container_name: postgres
-    environment:
-      - POSTGRES_DB=banking-db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=123456
-    ports:
-      - "5434:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - user-net
-
   redis:
     image: redis:7-alpine
     container_name: redis
     ports:
       - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - user-net
-
-volumes:
-  postgres_data:
-  redis_data:
-
-networks:
-  user-net:
-    driver: bridge

@@ -1,5 +1,6 @@
 package com.example.user_service.dto;
 
+import com.example.user_service.model.TypeEnum;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -17,4 +18,6 @@ public class OtpRecord {
     private String message;
     private int retryCount;
     private String code;
+    private String signature;
+    private TypeEnum type;
 }

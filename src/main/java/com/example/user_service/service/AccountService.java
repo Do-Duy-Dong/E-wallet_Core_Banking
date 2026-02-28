@@ -36,7 +36,7 @@ public class AccountService {
         String AT= jwtService.generateAccessToken(acc.getUserName());
         String RT= jwtService.generateRefreshToken(acc.getUserName());
 //        Set AT in Redis
-        redisTemplate.opsForValue().set("AT:"+acc.getUserName(), AT,10, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set("AT:"+acc.getUserName(), AT,100, TimeUnit.MINUTES);
 //        Save RT in database
         acc.setToken(RT);
         accountRepository.save(acc);

@@ -31,4 +31,7 @@ public class Transaction extends BaseClass {
     @ManyToOne
     @JoinColumn(name = "to_account_id")
     private Account toAccount;
+    @ManyToOne
+    @JoinColumn(name = "linked_bank_id")
+    private LinkedBank linkedBank;
 }

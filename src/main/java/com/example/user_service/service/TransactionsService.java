@@ -6,19 +6,23 @@ import com.example.user_service.model.*;
 import com.example.user_service.repository.OtpRepository;
 import com.example.user_service.repository.TransactionRepository;
 import com.example.user_service.utils.GenerateOtp;
-import jakarta.mail.MessagingException;
+import com.example.user_service.utils.HmacSignature;
+import com.example.user_service.utils.ValidateConfirmTS;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -28,10 +32,13 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class TransactionsService {
+    @Value("${signature.secret}")
+    private String secretKey;
     private final TransactionRepository transactionRepository;
     private final AccountService accountService;
     private final OtpRepository otpRepository;
     private final EmailService emailService;
+    private final OtpService otpService;
     private final RedisTemplate<String,Object> redisTemplate;
 //    STEP 1: GET OTP - POST[/api/v1/banking/transfer/initiate]
     public String initiateTransfer(GetOtpRequest request,String username) {
@@ -40,11 +47,22 @@ public class TransactionsService {
         if(redisTemplate.hasKey(key)) {
             throw new ResourceNotFound("Wait for previous OTP to expire");
         }
+        String signature= HmacSignature.calculateHMAC(
+                request.getRequestId(),
+                request.getFromAccount(),
+                request.getToAccount(),
+                request.getAmount(),
+                secretKey
+        );
+        if(!signature.equals(request.getSignature())){
+            throw new ResourceNotFound("Invalid signature");
+        }
+
         Account acctTransfer= accountService.getAccountByUserName(username);
-        Account acctReceive= accountService.getAccountById(UUID.fromString(request.getToAccount()));
         if(acctTransfer.getBalance()< request.getAmount()){
             throw new ResourceNotFound("Not enough balance");
         }
+        Account acctReceive= accountService.getAccountById(UUID.fromString(request.getToAccount()));
 
 //        Save to Redis cache
         String otp= GenerateOtp.generateOtp();
@@ -73,35 +91,25 @@ public class TransactionsService {
     }
 
     @Transactional
-    public void confirmTransaction(BankingRequest request, String username){
-//        Check requestId of transaction
+    @Retryable(
+            retryFor = {ObjectOptimisticLockingFailureException.class},
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 100)
+    )
+    public void confirmTransaction(VerifyOtp request, String username){
+        //        Check requestId of transaction
         if(transactionRepository.findByRequestId(request.getRequestId()).isPresent()){
             throw new ResourceNotFound("Transaction with this requestId already exists");
         }
-//        Get data from Redis and validate OTP
-        String key= "otp:"+request.getOtpId();
-        Map<Object,Object> otpRecord= redisTemplate.opsForHash().entries(key);
-        Integer retryCount= (Integer) otpRecord.get("retryCount");
-        String otpCode = (String) otpRecord.get("code");
-        if(otpRecord.isEmpty()){
-            throw new ResourceNotFound("OTP expired");
-        }
-        if(retryCount>=3){
-            throw new ResourceNotFound("Maximum retry attempts exceeded");
-        }
-        if(!otpCode.equals(request.getOtp())){
-//            Transaction not retry even main transaction fails
-            Long newRetryCount= increaseRetryCount(key);
-            if(newRetryCount>=3){
-                throw new ResourceNotFound("Maximum retry attempts exceeded");
-            }else {
-                throw new ResourceNotFound("Invalid OTP");
-            }
-        }
+//        VALIDATE OTP
+        OtpRecord otpRecord= otpService.validateOtpRecord(request,username, TypeEnum.TRANSFER);
 //        UPDATE BALANCE
-        Long amount= ((Number) otpRecord.get("amount")).longValue();
+        Long amount= otpRecord.getAmount();
         Account accTransfer= accountService.getAccountByUserName(username);
-        Account accReceive= accountService.getAccountById(UUID.fromString((String) otpRecord.get("toAccount")));
+        Account accReceive= accountService.getAccountById(UUID.fromString(otpRecord.getToAccount()));
+        if (accTransfer.getBalance() < amount) {
+            throw new ResourceNotFound("Insufficient balance");
+        }
         accTransfer.setBalance(accTransfer.getBalance()- amount);
         accReceive.setBalance(accReceive.getBalance()+ amount);
         accountService.saveAccount(accTransfer);
@@ -110,9 +118,9 @@ public class TransactionsService {
         try{
             Transaction transaction = Transaction.builder()
                     .fromAccount(accTransfer)
-                    .toAccount(accReceive)
                     .amount(amount)
-                    .message((String) otpRecord.get("message"))
+                    .toAccount(accReceive)
+                    .message((String) otpRecord.getMessage())
                     .requestId(request.getRequestId())
                     .type(TypeEnum.TRANSFER)
                     .status(StatusEnum.COMPLETED)
@@ -123,13 +131,9 @@ public class TransactionsService {
             throw new RuntimeException("Error processing transaction");
 
         }
-
-//        DELETE OTP RECORD
-        redisTemplate.delete("otp:"+request.getOtpId());
 //      SEND EMAIL
 
     }
-
 
     public ResponsePageBase<TransactionResponse> getTransactions(String username, int page){
         Account account= accountService.getAccountByUserName(username);
@@ -155,8 +159,10 @@ public class TransactionsService {
                 .build();
     }
 
-    @org.springframework.transaction.annotation.Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Long increaseRetryCount(String key){
-        return redisTemplate.opsForHash().increment(key,"retryCount",1);
+
+    @Recover
+    public void recover(ObjectOptimisticLockingFailureException e){
+        log.error("Max retry");
+        throw new ResourceNotFound("Server busy, try again later");
     }
 }

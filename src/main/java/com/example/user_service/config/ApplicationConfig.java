@@ -7,6 +7,8 @@ import com.example.user_service.service.UserDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -16,9 +18,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.client.RestTemplate;
 
 @Configuration
 @EnableAsync
+@EnableRetry
 public class ApplicationConfig {
     private final AccountRepository accountRepository;
 
@@ -50,4 +54,13 @@ public class ApplicationConfig {
         return provider;
 
     }
+
+    @Bean
+    public RestTemplate restTemplate(){
+        SimpleClientHttpRequestFactory factory= new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(10000);
+        factory.setReadTimeout(10000);
+        return new RestTemplate(factory);
+    }
+
 }
